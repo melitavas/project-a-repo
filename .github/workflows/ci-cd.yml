@@ -1,54 +1,46 @@
-name: CI/CD Project B
+name: CI/CD Project A
 
 on:
   push:
-    branches: ["main"]   # Runs whenever you push to main branch
+    branches: ["main"]
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout code
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Set up Python
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
         with:
-          python-version: '3.11'
+          node-version: '18'
 
-      # 3. Install dependencies
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: npm install
 
-      # 4. Run tests (if no tests, it will just skip)
       - name: Run tests
-        run: pytest || echo "No tests"
+        run: npm test || echo "No tests"
 
-      # 5. Authenticate to GCP
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v1
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      # 6. Configure gcloud
       - name: Configure gcloud
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
-      # 7. Build & push container image using Cloud Build
       - name: Build and Push Docker Image
         run: |
-          gcloud builds submit --tag us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/project-b-repo/project-b:latest .
+          gcloud builds submit --tag us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/project-a-repo/project-a:latest .
 
-      # 8. Deploy to Cloud Run
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy project-b-service \
-            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/project-b-repo/project-b:latest \
+          gcloud run deploy project-a-service \
+            --image us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/project-a-repo/project-a:latest \
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated
